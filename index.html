@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --ink:#1c1f24; --dim:#6b7280; --line:#e3e6ea;
+  --accent:#2563eb; --warn:#b45309; --hl:#fde68a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);color:var(--ink);
+  font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,-apple-system,sans-serif}
+code,.mono{font-family:"Cascadia Mono",Consolas,"Courier New",monospace}
+header{flex:none;max-height:52vh;overflow:auto;z-index:20;background:var(--card);
+  border-bottom:1px solid var(--line);padding:14px 20px 10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+h1{margin:0 0 2px;font-size:17px;font-weight:650;letter-spacing:.2px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:10px}
+.sub b{color:var(--ink)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.bar .lbl{color:var(--dim);font-size:12px;min-width:54px;flex:none}
+.chip{border:1px solid var(--line);background:#fafbfc;border-radius:999px;
+  padding:3px 11px;font-size:12px;cursor:pointer;user-select:none;white-space:nowrap;
+  transition:.12s}
+.chip:hover{border-color:#c3c9d1;background:#f2f4f7}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .n{opacity:.65;margin-left:5px;font-variant-numeric:tabular-nums}
+.chip.on .n{opacity:.8}
+.chip.c0chip{border-style:dashed}
+.chip.ovchip{border-color:#f0b429;background:#fffbeb;color:#92400e}
+.chip.ovchip.on{background:#b45309;border-color:#b45309;color:#fff}
+#q{flex:1;min-width:220px;border:1px solid var(--line);border-radius:6px;
+  padding:6px 10px;font-size:13px;font-family:inherit;background:#fff}
+#q:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+button.act{border:1px solid var(--line);background:#fff;border-radius:6px;
+  padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+button.act:hover{border-color:#c3c9d1;background:#f7f8fa}
+.count{margin-left:auto;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+.count b{color:var(--ink);font-size:13px}
+main{flex:1;min-height:0;overflow:auto;padding:14px 20px 60px}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);
+  border:1px solid var(--line);border-radius:8px;table-layout:fixed}
+thead th{position:sticky;top:0;z-index:10;background:#f0f2f5;text-align:left;
+  font-size:12px;font-weight:600;color:#4b5563;padding:8px 10px;
+  border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;
+  background-clip:padding-box}
+thead th:first-child{border-radius:7px 0 0 0}
+thead th:last-child{border-radius:0 7px 0 0}
+thead th:hover{background:#e8ebef}
+thead th .ar{color:var(--accent);font-size:10px}
+tbody td{padding:9px 10px;border-bottom:1px solid #eef0f3;vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fcfdfe}
+tr.ovr td{background:#fffdf5}
+tr.ovr:hover td{background:#fffaeb}
+tr.ovr td:first-child{box-shadow:inset 3px 0 0 #f0b429}
+tr.c0 .ttl,tr.c0 .prev,tr.c0 .full{opacity:.6}
+.c-id{width:132px}.c-seq{width:38px;text-align:center}
+.c-cat{width:148px}.c-fix{width:88px}.c-dec{width:200px}.c-rep{width:64px;text-align:center}
+td.c-id{font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;color:#374151}
+.sname{margin-top:2px;font-family:inherit;font-size:12px;line-height:1.35;
+  color:var(--dim);word-break:break-word}
+td.c-seq{color:var(--dim);font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;
+  white-space:nowrap;border:1px solid transparent}
+.C1{background:#fee2e2;color:#991b1b}.C2{background:#ffedd5;color:#9a3412}
+.C3{background:#fef3c7;color:#92400e}.C4{background:#dcfce7;color:#166534}
+.C5{background:#d1fae5;color:#065f46}.C6{background:#cffafe;color:#155e75}
+.C7{background:#e0e7ff;color:#3730a3}.C8{background:#fae8ff;color:#701a75}
+.C9{background:#f1f5f9;color:#334155;border-color:#e2e8f0}
+.C0{background:#e5e7eb;color:#4b5563;border-color:#d1d5db}
+.C10{background:#fafaf9;color:#78716c;border-color:#d6d3d1;border-style:dashed}
+.f-0{background:#eff6ff;color:#1d4ed8}
+.f-1{background:#f0fdf4;color:#15803d}
+.f-2{background:#fff7ed;color:#c2410c}
+select.cs,select.ds{font:inherit;font-size:11px;line-height:1.5;padding:1px 3px;
+  max-width:100%;border-radius:4px;border:1px solid rgba(0,0,0,.12);cursor:pointer}
+select.ds{width:100%}
+select.cs:focus,select.ds:focus{outline:2px solid var(--accent);outline-offset:1px}
+.d-{background:#fff;color:#6b7280;border-style:dashed;border-color:#cbd5e1}
+.d-agree{background:#dcfce7;color:#14532d;border-color:#86efac}
+.d-mine{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd}
+textarea.dn{width:100%;margin-top:5px;font:inherit;font-size:12px;line-height:1.55;
+  border:1px solid #93c5fd;border-radius:4px;padding:5px 6px;resize:vertical;
+  min-height:64px;background:#f8fbff;color:#1e3a8a}
+textarea.dn:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.dnhint{color:#9ca3af;font-size:10px;margin-top:3px}
+.dnok{color:#15803d}
+.ovb{display:inline-block;margin-left:4px;font-size:10px;color:#92400e;
+  background:#fef3c7;border:1px solid #fde68a;border-radius:3px;padding:0 4px;
+  cursor:help;vertical-align:top}
+.ttl{font-weight:600;color:#111827;margin-bottom:3px}
+.prev{color:#4b5563;font-size:13px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.full{font-size:13px;color:#374151;white-space:pre-wrap;
+  background:#fbfcfd;border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 6px 6px 0;padding:10px 12px;margin-top:4px;line-height:1.75}
+.full code{background:#eef1f5;padding:1px 5px;border-radius:3px;font-size:12px;color:#0f172a}
+.full b{color:#111827}
+mark{background:var(--hl);padding:0 1px;border-radius:2px}
+.rep a{color:var(--accent);text-decoration:none;font-size:12px}
+.rep a:hover{text-decoration:underline}
+.meta{color:#9ca3af;font-size:11px;margin-top:6px}
+.empty{padding:50px;text-align:center;color:var(--dim)}
+@media (max-width:1100px){.c-fix,.c-rep{display:none}}
+</style></head><body>
+<header>
+  <h1 id="h1"></h1>
+  <div class="sub" id="sub"></div>
+  <div class="bar"><span class="lbl" data-ui="lblC"></span><span id="fc"></span></div>
+  <div class="bar"><span class="lbl" data-ui="lblF"></span><span id="ff"></span><span id="fo"></span></div>
+  <div class="bar"><span class="lbl" data-ui="lblD"></span><span id="fd"></span></div>
+  <div class="bar">
+    <input id="q">
+    <button class="act" id="reset" data-ui="btReset"></button>
+    <button class="act" id="fold" data-ui="btFold"></button>
+    <button class="act" id="csv" data-ui="btCsv"></button>
+    <button class="act" id="ovexp" data-ui="btExp"></button>
+    <button class="act" id="ovimp" data-ui="btImp"></button>
+    <button class="act" id="ovclr" data-ui="btClr"></button>
+    <input type="file" id="fimp" accept=".tsv,.txt,.csv" hidden>
+    <span class="count"><b id="shown">0</b> / <span id="tot">0</span> <span data-ui="uCond"></span> ·
+      <b id="nsk">0</b> <span data-ui="uUnit"></span> · <span data-ui="uOvr"></span> <b id="novr">0</b> ·
+      <span data-ui="uDec"></span> <b id="ndec">0</b></span>
+  </div>
+</header>
+<main>
+<table>
+  <thead><tr>
+    <th class="c-id"  data-k="id"><span data-ui="thId"></span> <span class="ar"></span></th>
+    <th class="c-seq" data-k="seq"><span data-ui="thSeq"></span></th>
+    <th class="c-cat" data-k="c"><span data-ui="thCat"></span> <span class="ar"></span></th>
+    <th class="c-fix" data-k="f"><span data-ui="thFix"></span> <span class="ar"></span></th>
+    <th data-k="t"><span data-ui="thTxt"></span></th>
+    <th class="c-dec" data-k="d"><span data-ui="thDec"></span> <span class="ar"></span></th>
+    <th class="c-rep"><span data-ui="thRep"></span></th>
+  </tr></thead>
+  <tbody id="tb"></tbody>
+</table>
+<div class="empty" id="empty" data-ui="empty" hidden></div>
+</main>
+<script id="DATA" type="application/json">[]</script>
+<script id="META" type="application/json">{}</script>
+<script>
+window.SYNC = (function () {
+  'use strict';
+  var OWNER = 'Jiawei-Ni', REPO = 'rv-data', BRANCH = 'main';
+  var API = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/';
+  var NS = 'sync.' + OWNER + '.' + REPO;
+  var TOKEN = '', WHO = '', BOOT = null, APP = null;
+  var REMOTE = {};      
+  var SIG = {};         
+  var PENDING = {};     
+  var SHA = '';         
+  var LASTC = '';       
+  var BUSY = false, TIMER = null, POLL = 10;
+  function ls(k, v) {
+    try {
+      if (v === undefined) return localStorage.getItem(k) || '';
+      if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v);
+    } catch (e) {}
+    return '';
+  }
+  function b64enc(str) {
+    var u8 = new TextEncoder().encode(str), bin = '';
+    for (var i = 0; i < u8.length; i += 0x8000) {
+      bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    }
+    return btoa(bin);
+  }
+  function b64dec(s) {
+    var bin = atob(String(s).replace(/\s/g, '')), u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(u8);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c];
+    });
+  }
+  function stamp(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function req(path, opt) {
+    opt = opt || {};
+    var h = opt.headers || {};
+    h.Authorization = 'Bearer ' + TOKEN;
+    h['X-GitHub-Api-Version'] = '2022-11-28';
+    return fetch(API + path, {method: opt.method || 'GET', headers: h,
+                              body: opt.body, cache: 'no-store'});
+  }
+  function fail(r) {
+    var m = {401: 'Token invalid or expired', 403: 'Token lacks permission, or rate limited',
+             404: 'Not found (token may not cover this repo)'}[r.status];
+    return new Error(m || ('HTTP ' + r.status));
+  }
+  function getRaw(file) {
+    return req('contents/' + file + '?ref=' + BRANCH,
+               {headers: {Accept: 'application/vnd.github.raw'}})
+      .then(function (r) { if (!r.ok) throw fail(r); return r.json(); });
+  }
+  function getState() {
+    return req('contents/state.json?ref=' + BRANCH).then(function (r) {
+      if (r.status === 404) return {obj: {}, sha: ''};     
+      if (!r.ok) throw fail(r);
+      return r.json().then(function (j) {
+        return {obj: JSON.parse(b64dec(j.content) || '{}'), sha: j.sha};
+      });
+    });
+  }
+  function headCommit() {
+    return req('commits?path=state.json&per_page=1&sha=' + BRANCH).then(function (r) {
+      if (!r.ok) throw fail(r);
+      return r.json().then(function (a) { return (a[0] && a[0].sha) || ''; });
+    });
+  }
+  function style() {
+    if (document.getElementById('syncCSS')) return;
+    var s = document.createElement('style');
+    s.id = 'syncCSS';
+    s.textContent = [
+      '#syncbar{position:fixed;top:8px;right:12px;z-index:99;display:flex;gap:8px;',
+      '  align-items:center;font-size:12px;background:#fff;border:1px solid #e3e6ea;',
+      '  border-radius:999px;padding:4px 10px 4px 12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}',
+      '#syncbar .dot{width:7px;height:7px;border-radius:50%;background:#16a34a;flex:none}',
+      '#syncbar.busy .dot{background:#f59e0b}',
+      '#syncbar.off  .dot{background:#dc2626}',
+      '#syncbar b{font-weight:600}',
+      '#syncbar button{border:1px solid #e3e6ea;background:#fafbfc;border-radius:6px;',
+      '  padding:2px 8px;font:inherit;font-size:11px;cursor:pointer;color:#6b7280}',
+      '#syncbar button:hover{background:#f2f4f7}',
+      '.by{margin-top:3px;font-size:11px;color:#9ca3af;line-height:1.3}',
+      '#gate{position:fixed;inset:0;z-index:200;background:#f6f7f9;display:flex;',
+      '  align-items:center;justify-content:center;font:14px/1.6 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}',
+      '#gate .box{width:420px;max-width:92vw;background:#fff;border:1px solid #e3e6ea;',
+      '  border-radius:12px;padding:26px 26px 22px;box-shadow:0 4px 20px rgba(0,0,0,.06)}',
+      '#gate h2{margin:0 0 4px;font-size:16px;font-weight:650}',
+      '#gate p{margin:0 0 18px;color:#6b7280;font-size:12px}',
+      '#gate label{display:block;font-size:12px;color:#6b7280;margin:12px 0 4px}',
+      '#gate input{width:100%;padding:7px 10px;border:1px solid #e3e6ea;border-radius:7px;',
+      '  font:inherit;font-size:13px}',
+      '#gate input:focus{outline:none;border-color:#2563eb}',
+      '#gate .go{width:100%;margin-top:18px;padding:9px;border:0;border-radius:7px;',
+      '  background:#2563eb;color:#fff;font:inherit;font-weight:600;cursor:pointer}',
+      '#gate .go:hover{background:#1d4ed8}',
+      '#gate .err{margin-top:12px;color:#b91c1c;font-size:12px;min-height:16px}'
+    ].join('\n');
+    document.head.appendChild(s);
+  }
+  function bar(cls, txt) {
+    var b = document.getElementById('syncbar');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'syncbar';
+      document.body.appendChild(b);
+    }
+    b.className = cls || '';
+    b.innerHTML = '<span class="dot"></span><span id="syncTxt">' + esc(txt || 'Synced') +
+      '</span><b>' + esc(WHO) + '</b><button id="syncOut">Sign out</button>';
+    document.getElementById('syncOut').onclick = function () {
+      if (!confirm('Forget the saved name and token on this machine? Unpushed edits are kept.')) return;
+      ls(NS + '.token', null); ls(NS + '.who', null);
+      location.reload();
+    };
+  }
+  function gate(err) {
+    style();
+    var g = document.getElementById('gate');
+    if (!g) {
+      g = document.createElement('div');
+      g.id = 'gate';
+      g.innerHTML =
+        '<div class="box"><h2>Sign in</h2>' +
+        '<p>Your name is stamped on each entry you edit. The token stays in this browser and is never uploaded.</p>' +
+        '<label>Name</label><input id="gWho" autocomplete="off">' +
+        '<label>Access token</label><input id="gTok" type="password" autocomplete="off" ' +
+        'placeholder="github_pat_…">' +
+        '<button class="go" id="gGo">Enter</button>' +
+        '<div class="err" id="gErr"></div></div>';
+      document.body.appendChild(g);
+      var go = function () {
+        var w = document.getElementById('gWho').value.trim();
+        var t = document.getElementById('gTok').value.trim();
+        if (!w || !t) { document.getElementById('gErr').textContent = 'Both fields are required.'; return; }
+        WHO = w; TOKEN = t;
+        ls(NS + '.who', w); ls(NS + '.token', t);
+        document.getElementById('gErr').textContent = 'Connecting...';
+        load().catch(function (e) { gate(String(e.message || e)); });
+      };
+      document.getElementById('gGo').onclick = go;
+      g.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+    }
+    g.hidden = false;
+    document.getElementById('gWho').value = WHO;
+    document.getElementById('gErr').textContent = err || '';
+    if (err) { ls(NS + '.token', null); TOKEN = ''; }
+    (WHO ? document.getElementById('gTok') : document.getElementById('gWho')).focus();
+  }
+  function savePending() { ls(NS + '.pending', JSON.stringify(PENDING)); }
+  function loadPending() {
+    try { PENDING = JSON.parse(ls(NS + '.pending') || '{}'); } catch (e) { PENDING = {}; }
+  }
+  function nPending() { return Object.keys(PENDING).length; }
+  function schedule(ms) {
+    if (TIMER) clearTimeout(TIMER);
+    TIMER = setTimeout(flush, ms === undefined ? 3000 : ms);
+  }
+  function push(k, entry) {
+    PENDING[k] = {v: entry || null};
+    savePending();
+    bar('busy', nPending() + ' pending');
+    schedule();
+  }
+  function flush() {
+    if (BUSY || !nPending() || !TOKEN) return Promise.resolve();
+    BUSY = true;
+    bar('busy', 'Syncing...');
+    var snap = {};
+    Object.keys(PENDING).forEach(function (k) { snap[k] = PENDING[k]; });
+    var tries = 0;
+    var attempt = function () {
+      return getState().then(function (cur) {
+        var merged = {}, now = new Date().toISOString();
+        Object.keys(cur.obj).forEach(function (k) { merged[k] = cur.obj[k]; });
+        Object.keys(snap).forEach(function (k) {
+          var v = snap[k].v;
+          if (v == null) delete merged[k];
+          else merged[k] = Object.assign({}, v, {by: WHO, at: now});
+        });
+        return req('contents/state.json', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            message: WHO + ' updated ' + Object.keys(snap).length + ' entries',
+            content: b64enc(JSON.stringify(merged)),
+            sha: cur.sha || undefined,
+            branch: BRANCH
+          })
+        }).then(function (r) {
+          if ((r.status === 409 || r.status === 422) && ++tries < 4) return attempt();
+          if (!r.ok) throw fail(r);
+          return r.json().then(function (j) {
+            SHA = (j.content && j.content.sha) || '';
+            LASTC = (j.commit && j.commit.sha) || LASTC;
+            REMOTE = merged;
+            Object.keys(snap).forEach(function (k) {
+              if (PENDING[k] === snap[k]) delete PENDING[k];
+            });
+            savePending();
+            apply(true);
+          });
+        });
+      });
+    };
+    return attempt().then(function () {
+      BUSY = false;
+      bar('', nPending() ? nPending() + ' pending' : 'Synced');
+      if (nPending()) schedule(500);
+    }).catch(function (e) {
+      BUSY = false;
+      bar('off', 'Offline: ' + (e.message || e) + ' (edits kept locally)');
+      schedule(20000);          
+    });
+  }
+  function apply(doRender) {
+    if (!APP) return;
+    var st = {};
+    SIG = {};
+    Object.keys(REMOTE).forEach(function (k) {
+      var e = REMOTE[k] || {}, o = {};
+      if (e.c) o.c = e.c;
+      if (e.d) o.d = e.d;
+      if (e.n) o.n = e.n;
+      if (e.by || e.at) SIG[k] = {by: e.by || '', at: e.at || ''};
+      if (Object.keys(o).length) st[k] = o;
+    });
+    Object.keys(PENDING).forEach(function (k) {
+      var v = PENDING[k].v;
+      if (v == null) delete st[k]; else st[k] = v;
+    });
+    APP.write(st);
+    if (doRender) APP.render();
+  }
+  function poll() {
+    if (BUSY || !TOKEN || document.hidden) return;
+    headCommit().then(function (c) {
+      if (!c || c === LASTC) return;                 
+      return getState().then(function (cur) {
+        LASTC = c; SHA = cur.sha; REMOTE = cur.obj;
+        apply(true);
+        if (!nPending()) bar('', 'Synced');
+      });
+    }).catch(function (e) {
+      bar('off', 'Offline: ' + (e.message || e) + ' (edits kept locally)');
+    });
+  }
+  function load() {
+    return Promise.all([getRaw('meta.json'), getRaw('data.json'), getState()])
+      .then(function (a) {
+        var meta = a[0], data = a[1], st = a[2];
+        POLL = meta.poll || 10;
+        REMOTE = st.obj; SHA = st.sha;
+        document.getElementById('META').textContent = JSON.stringify(meta);
+        document.getElementById('DATA').textContent = JSON.stringify(data);
+        var g = document.getElementById('gate');
+        if (g) g.hidden = true;
+        style();
+        bar('', nPending() ? nPending() + ' pending' : 'Synced');
+        BOOT();                       
+        return headCommit().then(function (c) { LASTC = c; }).catch(function () {});
+      })
+      .then(function () {
+        setInterval(poll, POLL * 1000);
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) { poll(); if (nPending()) schedule(0); }
+        });
+        window.addEventListener('beforeunload', function (e) {
+          if (!nPending()) return;
+          flush();
+          e.preventDefault();
+          e.returnValue = '';
+        });
+        if (nPending()) schedule(0);
+      });
+  }
+  function start(bootFn) {
+    BOOT = bootFn;
+    style();
+    loadPending();
+    TOKEN = ls(NS + '.token');
+    WHO = ls(NS + '.who');
+    if (!TOKEN || !WHO) return gate();
+    load().catch(function (e) { gate(String(e.message || e)); });
+  }
+  function attach(app) {
+    APP = app;
+    apply(false);      
+  }
+  function sigOf(k) {
+    var s = SIG[k];
+    if (!s || (!s.by && !s.at)) return '';
+    var t = stamp(s.at);
+    return '<div class="by">' + esc(s.by) + (t ? ' · ' + t : '') + '</div>';
+  }
+  return {start: start, attach: attach, push: push, sigOf: sigOf,
+          flush: flush, pending: nPending};
+})();
+</script>
+<script>
+function boot() {
+const D = JSON.parse(document.getElementById('DATA').textContent);
+const M = JSON.parse(document.getElementById('META').textContent);
+const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const el = id => document.getElementById(id);
+const fc = el('fc'), ff = el('ff'), fo = el('fo'), fd = el('fd'), q = el('q'), tb = el('tb'),
+      empty = el('empty'), shown = el('shown'), tot = el('tot'), nsk = el('nsk'),
+      novr = el('novr'), ndec = el('ndec'), fimp = el('fimp');
+const T = k => (M.ui && M.ui[k] !== undefined) ? M.ui[k] : '';
+const TF = (k, v) => Object.keys(v).reduce((s, x) => s.split('{' + x + '}').join(v[x]), String(T(k)));
+const nOk = n => TF('dnOk', {n: n});
+document.title = T('title') || 'Review';
+el('h1').textContent = T('h1');
+el('sub').innerHTML = String(T('sub'))
+  .replace('{src}', esc(M.src)).replace('{total}', M.total).replace('{u}', M.units);
+q.placeholder = T('ph');
+document.querySelectorAll('[data-ui]').forEach(e => { e.textContent = T(e.dataset.ui); });
+tot.textContent = M.total;
+const STKEY = T('ns') + 'state.' + M.src;
+let ST = {};   
+try { ST = JSON.parse(localStorage.getItem(STKEY) || '{}'); } catch (e) { ST = {}; }
+try {
+  const old = JSON.parse(localStorage.getItem(T('ns') + 'override.' + M.src) || '{}');
+  Object.keys(old).forEach(k => { ST[k] = ST[k] || {}; if (!ST[k].c) ST[k].c = old[k]; });
+} catch (e) {}
+const key = d => d.id + '#' + d.seq;
+const st = d => ST[key(d)] || {};
+function put(d, patch) {
+  const k = key(d), o = Object.assign({}, ST[k] || {}, patch);
+  Object.keys(o).forEach(x => { if (o[x] === '' || o[x] == null) delete o[x]; });
+  if (Object.keys(o).length) ST[k] = o; else delete ST[k];
+  try { localStorage.setItem(STKEY, JSON.stringify(ST)); }
+  catch (e) { console.warn(T('wStore'), e); }
+  if (window.SYNC) SYNC.push(k, ST[k]);
+}
+const cat = d => st(d).c || d.c;
+const orig = d => d.o || d.c;
+const isOv = d => cat(d) !== orig(d);
+const FIXED = {C0: 'none', C10: 'hold'};
+const dec = d => FIXED[cat(d)] || (st(d).d || d.dv || '');
+const note = d => st(d).n !== undefined ? st(d).n : (d.dn || '');
+const decided = d => dec(d) !== '';
+const selC = new Set(), selF = new Set(), selD = new Set();
+let onlyOv = false, sortK = null, sortDir = 1, allOpen = true;   
+function tally() {
+  const c = {}, f = {}, dd = {};
+  D.forEach(d => {
+    const k = cat(d); c[k] = (c[k] || 0) + 1; f[d.f] = (f[d.f] || 0) + 1;
+    const x = dec(d); dd[x] = (dd[x] || 0) + 1;
+  });
+  return {c: c, f: f, d: dd};
+}
+function chips(host, keys, n, sel, label, extra) {
+  host.innerHTML = keys.map(k =>
+    '<span class="chip' + (sel.has(k) ? ' on' : '') + (extra && extra(k) ? ' ' + extra(k) : '') +
+    '" data-k="' + k + '">' + label(k) +
+    '<span class="n">' + (n[k] || 0) + '</span></span>').join(' ');
+  host.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const k = c.dataset.k;
+    sel.has(k) ? sel.delete(k) : sel.add(k);
+    render();
+  });
+}
+function bars() {
+  const n = tally();
+  chips(fc, M.codes, n.c, selC, k => k + ' ' + M.name[k], k => k === 'C0' ? 'c0chip' : '');
+  chips(ff, M.fixers, n.f, selF, k => k);
+  chips(fd, M.decs, n.d, selD, k => M.decName[k], k => k === '' ? 'c0chip' : '');
+  const nov = D.filter(isOv).length;
+  novr.textContent = nov;
+  ndec.textContent = D.filter(decided).length;
+  fo.innerHTML = '<span class="chip ovchip' + (onlyOv ? ' on' : '') +
+    '" id="chOv">' + esc(T('ovOnly')) + '<span class="n">' + nov + '</span></span>';
+  el('chOv').onclick = () => { onlyOv = !onlyOv; render(); };
+}
+function md(s, kw) {
+  let h = esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/^\s*-\s+/gm, '· ');
+  if (kw) {
+    const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    h = h.split(/(<[^>]*>)/).map(s => s.charAt(0) === '<' ? s : s.replace(re, '<mark>$1</mark>')).join('');
+  }
+  return h;
+}
+function match(d, kw) {
+  if (onlyOv && !isOv(d)) return false;
+  if (selC.size && !selC.has(cat(d))) return false;
+  if (selF.size && !selF.has(d.f)) return false;
+  if (selD.size && !selD.has(dec(d))) return false;
+  if (!kw) return true;
+  return (d.id + ' ' + d.n + ' ' + d.t + ' ' + d.b + ' ' + d.r + ' ' + note(d))
+    .toLowerCase().includes(kw);
+}
+const optC = c => M.codes.map(k =>
+  '<option value="' + k + '"' + (k === c ? ' selected' : '') + '>' + k + ' ' + M.name[k] + '</option>').join('');
+const optD = v => ['', 'agree', 'mine'].map(k =>
+  '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + M.decName[k] + '</option>').join('');
+let view = [];
+function render() {
+  bars();
+  const kw = q.value.trim().toLowerCase();
+  view = D.filter(d => match(d, kw));
+  if (sortK) {
+    const num = sortK === 'id' || sortK === 'seq';
+    const ord = (d, k) => k === 'c' ? M.codes.indexOf(cat(d)) : M.decs.indexOf(dec(d));
+    view = view.slice().sort((a, b) => sortDir *
+      (num ? a[sortK] - b[sortK]
+           : (sortK === 'c' || sortK === 'd') ? ord(a, sortK) - ord(b, sortK)
+           : String(a[sortK]).localeCompare(String(b[sortK]), 'zh')));
+  }
+  shown.textContent = view.length;
+  nsk.textContent = new Set(view.map(d => d.id)).size;
+  empty.hidden = view.length > 0;
+  tb.innerHTML = view.map((d, i) => {
+    const c = cat(d), ov = isOv(d), dv = dec(d), nt = note(d);
+    const sg = window.SYNC ? SYNC.sigOf(key(d)) : '';
+    const decCell = (FIXED[c]
+      ? '<span class="tag ' + c + '">' + M.decName[FIXED[c]] + '</span>'
+      : '<select class="ds d-' + dv + '" data-i="' + i + '">' + optD(dv) + '</select>' +
+        (dv === 'mine'
+          ? '<textarea class="dn" data-i="' + i + '" placeholder="' + esc(T('dnPh')) + '">' +
+            esc(nt) + '</textarea><div class="dnhint" data-h="' + i + '">' +
+            (nt ? '<span class="dnok">' + nOk(nt.length) + '</span>' : T('dnHint')) + '</div>'
+          : '')) + sg;
+    return '<tr class="' + (ov ? 'ovr ' : '') + (c === 'C0' ? 'c0' : '') + '">' +
+      '<td class="c-id">' + d.id +
+        (d.n ? '<div class="sname">' + md(d.n, kw) + '</div>' : '') + '</td>' +
+      '<td class="c-seq">' + d.seq + '</td>' +
+      '<td class="c-cat"><select class="cs ' + c + '" data-i="' + i + '">' + optC(c) + '</select>' +
+        (ov ? '<span class="ovb" title="' + esc(T('ovTip') + orig(d) + ' ' + M.name[orig(d)]) + '">' + T('ovMark') + '</span>' : '') +
+      '</td>' +
+      '<td class="c-fix"><span class="tag f-' + M.fixers.indexOf(d.f) + '">' + esc(d.f) + '</span></td>' +
+      '<td>' +
+        (d.t ? '<div class="ttl">' + md(d.t, kw) + '</div>' : '') +
+        (allOpen
+          ? '<div class="full">' + md(d.b, kw) +
+            '<div class="meta">' + T('mFrom') + ' ' + d.r + ' · ' + T('mSplit') + ' ' + d.p +
+            (ov ? ' · <b>' + T('ovInline') + '</b> ' + orig(d) + ' → ' + c : '') + '</div></div>'
+          : '<div class="prev">' + md(d.b, kw) + '</div>') +
+      '</td>' +
+      '<td class="c-dec">' + decCell + '</td>' +
+      '<td class="c-rep rep">' + (M.remote
+        ? '<span class="mono">' + esc(d.r) + '</span>'
+        : '<a href="' + esc(d.r) + '" target="_blank">' + T('open') + '</a>') + '</td>' +
+      '</tr>';
+  }).join('');
+  tb.querySelectorAll('select.cs').forEach(s => s.onchange = () => {
+    const d = view[+s.dataset.i];
+    put(d, {c: s.value === orig(d) ? '' : s.value});
+    render();
+  });
+  tb.querySelectorAll('select.ds').forEach(s => s.onchange = () => {
+    const d = view[+s.dataset.i];
+    put(d, {d: s.value});
+    render();
+  });
+  tb.querySelectorAll('textarea.dn').forEach(a => {
+    const d = view[+a.dataset.i];
+    const hint = tb.querySelector('.dnhint[data-h="' + a.dataset.i + '"]');
+    a.oninput = () => {
+      put(d, {n: a.value});
+      if (hint) hint.innerHTML = a.value
+        ? '<span class="dnok">' + nOk(a.value.length) + '</span>' : T('dnHint');
+    };
+    a.onblur = () => { ndec.textContent = D.filter(decided).length; };
+  });
+}
+document.querySelectorAll('thead th[data-k]').forEach(th => th.onclick = () => {
+  const k = th.dataset.k;
+  sortDir = sortK === k ? -sortDir : 1; sortK = k;
+  document.querySelectorAll('thead .ar').forEach(a => a.textContent = '');
+  const ar = th.querySelector('.ar'); if (ar) ar.textContent = sortDir > 0 ? '▲' : '▼';
+  render();
+});
+q.oninput = render;
+el('reset').onclick = () => {
+  selC.clear(); selF.clear(); selD.clear(); onlyOv = false;
+  q.value = ''; sortK = null; allOpen = true;
+  document.querySelectorAll('thead .ar').forEach(a => a.textContent = '');
+  el('fold').textContent = T('btFold'); render();
+};
+el('fold').onclick = () => {
+  allOpen = !allOpen;
+  el('fold').textContent = T(allOpen ? 'btFold' : 'btUnfold'); render();
+};
+function dl(name, text, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type: mime || 'text/plain;charset=utf-8'}));
+  a.download = name; a.click();
+}
+const oneline = s => String(s || '').replace(/\r?\n/g, ' / ').replace(/\t/g, ' ');
+el('csv').onclick = () => {
+  const Q = s => '"' + String(s).replace(/"/g, '""') + '"';
+  const text = '﻿' +
+    [T('csvCols').map(Q).join(',')]
+    .concat(view.map(d => [d.id, d.n, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
+      (d.t ? '**' + d.t + '**' + T('csvSep') : '') + d.b,
+      M.decName[dec(d)], dec(d) === 'mine' ? note(d) : '', d.r,
+      isOv(d) ? T('yes') : '', isOv(d) ? orig(d) : ''].map(Q).join(','))).join('\r\n');
+  dl(String(T('csvName')).replace('{n}', view.length), text, 'text/csv;charset=utf-8');
+};
+el('ovexp').onclick = () => {
+  const list = D.filter(d => isOv(d) || decided(d));
+  if (!list.length) { alert(T('aExp')); return; }
+  const text = '﻿' + [T('ovCols').join('\t')]
+    .concat(list.map(d => [d.id, d.seq, cat(d), orig(d),
+      M.decName[dec(d)], dec(d) === 'mine' ? oneline(note(d)) : '',
+      oneline(d.t || d.b).slice(0, 80)].join('\t'))).join('\r\n') + '\r\n';
+  dl(T('ovName'), text, 'text/tab-separated-values;charset=utf-8');
+};
+el('ovimp').onclick = () => fimp.click();
+fimp.onchange = () => {
+  const f = fimp.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const lines = String(rd.result).replace(/^﻿/, '').trim().split(/\r?\n/);
+    const h = lines[0].split('\t'), OC = T('ovCols');
+    const iI = h.indexOf(OC[0]), iS = h.indexOf(OC[1]), iC = h.indexOf(OC[2]),
+          iD = h.indexOf(OC[4]), iN = h.indexOf(OC[5]);
+    if (iI < 0 || iS < 0) { alert(TF('aImpHdr', {a: OC[0], b: OC[1]})); return; }
+    const base = {}; D.forEach(d => base[key(d)] = d);
+    let ok = 0, miss = 0;
+    lines.slice(1).forEach(ln => {
+      if (!ln.trim()) return;
+      const v = ln.split('\t'), d = base[v[iI] + '#' + v[iS]];
+      if (!d) { miss++; return; }
+      const patch = {};
+      if (iC >= 0) {
+        const c = (v[iC] || '').trim().split(/\s+/)[0];
+        if (M.name[c]) patch.c = (c === orig(d) ? '' : c);
+      }
+      if (iD >= 0) {
+        const dv = Object.keys(M.decName).filter(k => M.decName[k] === (v[iD] || '').trim())[0];
+        if (dv !== undefined && dv !== 'none') patch.d = dv;
+      }
+      if (iN >= 0) patch.n = v[iN] || '';
+      put(d, patch); ok++;
+    });
+    render();
+    alert(TF('aImpOk', {ok: ok, miss: miss ? TF('aImpMiss', {n: miss}) : ''}));
+    fimp.value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+};
+el('ovclr').onclick = () => {
+  const n = Object.keys(ST).length;
+  if (!n) { alert(T('aClrNone')); return; }
+  if (!confirm(TF('aClr', {n: n}))) return;
+  ST = {};
+  try { localStorage.removeItem(STKEY); localStorage.removeItem(T('ns') + 'override.' + M.src); }
+  catch (e) {}
+  render();
+};
+document.onkeydown = e => {
+  const tag = document.activeElement.tagName;
+  if (e.key === '/' && tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA') {
+    e.preventDefault(); q.focus();
+  }
+  if (e.key === 'Escape') { document.activeElement.blur(); }
+};
+if (window.SYNC) SYNC.attach({
+  read: () => ST,
+  write: s => {
+    ST = s;
+    try { localStorage.setItem(STKEY, JSON.stringify(ST)); } catch (e) {}
+  },
+  render: render
+});
+render();
+}
+SYNC.start(boot);
+</script></body></html>
