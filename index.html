@@ -82,6 +82,7 @@ select.cs:focus,select.ds:focus{outline:2px solid var(--accent);outline-offset:1
 .d-{background:#fff;color:#6b7280;border-style:dashed;border-color:#cbd5e1}
 .d-agree{background:#dcfce7;color:#14532d;border-color:#86efac}
 .d-mine{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd}
+.d-tbd{background:#fee2e2;color:#7f1d1d;border-color:#fca5a5}
 textarea.dn{width:100%;margin-top:5px;font:inherit;font-size:12px;line-height:1.55;
   border:1px solid #93c5fd;border-radius:4px;padding:5px 6px;resize:vertical;
   min-height:64px;background:#f8fbff;color:#1e3a8a}
@@ -564,7 +565,7 @@ function match(d, kw) {
 }
 const optC = c => M.codes.map(k =>
   '<option value="' + k + '"' + (k === c ? ' selected' : '') + '>' + k + ' ' + M.name[k] + '</option>').join('');
-const optD = v => ['', 'agree', 'mine'].map(k =>
+const optD = v => M.dsel.map(k =>
   '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + M.decName[k] + '</option>').join('');
 let view = [];
 function render() {
