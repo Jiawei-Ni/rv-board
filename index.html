@@ -153,7 +153,7 @@ body.v-char .fixbar{display:none}
 <main>
 <table>
   <thead><tr>
-    <th class="c-cn"  data-k="cn"><span data-ui="thCn"></span> <span class="ar"></span></th>
+    <th class="c-cn"  data-k="gd"><span data-ui="thCn"></span> <span class="ar"></span></th>
     <th class="c-cr"  data-k="cr"><span data-ui="thCr"></span> <span class="ar"></span></th>
     <th class="c-nat" data-k="nt"><span data-ui="thNat"></span> <span class="ar"></span></th>
     <th class="c-id"  data-k="id"><span data-ui="thId"></span> <span class="ar"></span></th>
@@ -544,7 +544,7 @@ function setView(v) {
   if (v === vw) return;
   vw = v;
   document.body.className = 'v-' + v;
-  sortK = v === 'char' ? 'cn' : null;
+  sortK = v === 'char' ? 'gd' : null;
   sortDir = 1;
   document.querySelectorAll('thead .ar').forEach(a => a.textContent = '');
   render();
@@ -625,7 +625,8 @@ function match(d, kw) {
     if (selN.size && !selN.has(d.nt)) return false;
   }
   if (!kw) return true;
-  return (d.id + ' ' + d.n + ' ' + d.cn + ' ' + d.t + ' ' + d.b + ' ' + d.r + ' ' + note(d))
+  return (d.id + ' ' + d.n + ' ' + d.cn + ' ' + d.gd + ' ' + d.t + ' ' + d.b + ' ' + d.r +
+          ' ' + note(d))
     .toLowerCase().includes(kw);
 }
 const optC = c => M.codes.map(k =>
@@ -638,7 +639,7 @@ function render() {
   const kw = q.value.trim().toLowerCase();
   view = D.filter(d => match(d, kw));
   if (sortK) {
-    const num = sortK === 'id' || sortK === 'seq' || sortK === 'nt';
+    const num = sortK === 'id' || sortK === 'seq' || sortK === 'nt' || sortK === 'gd';
     const ord = (d, k) => k === 'c' ? M.codes.indexOf(cat(d))
                         : k === 'cr' ? M.rar.indexOf(d.cr)
                         : M.decs.indexOf(dec(d));
@@ -662,7 +663,8 @@ function render() {
             (nt ? '<span class="dnok">' + nOk(nt.length) + '</span>' : T('dnHint')) + '</div>'
           : '')) + sg;
     return '<tr class="' + (ov ? 'ovr ' : '') + (c === 'C0' ? 'c0' : '') + '">' +
-      '<td class="c-cn">' + md(d.cn, kw) + '</td>' +
+      '<td class="c-cn">' + md(d.cn, kw) +
+        '<div class="sname">' + esc(d.gd) + '</div></td>' +
       '<td class="c-cr"><span class="tag r-' +
         (/^[A-Z]+$/.test(d.cr) ? d.cr : 'none') + '">' + esc(d.cr) + '</span></td>' +
       '<td class="c-nat">' + esc(d.nt) + '</td>' +
@@ -738,7 +740,7 @@ el('csv').onclick = () => {
   const Q = s => '"' + String(s).replace(/"/g, '""') + '"';
   const text = '﻿' +
     [T('csvCols').map(Q).join(',')]
-    .concat(view.map(d => [d.id, d.n, d.cn, d.cr, d.nt, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
+    .concat(view.map(d => [d.id, d.n, d.cn, d.gd, d.cr, d.nt, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
       (d.t ? '**' + d.t + '**' + T('csvSep') : '') + d.b,
       M.decName[dec(d)], dec(d) === 'mine' ? note(d) : '', d.r,
       isOv(d) ? T('yes') : '', isOv(d) ? orig(d) : ''].map(Q).join(','))).join('\r\n');
