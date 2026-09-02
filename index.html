@@ -108,13 +108,33 @@ mark{background:var(--hl);padding:0 1px;border-radius:2px}
 .rep a:hover{text-decoration:underline}
 .meta{color:#9ca3af;font-size:11px;margin-top:6px}
 .empty{padding:50px;text-align:center;color:var(--dim)}
+body.v-unit .c-cn,body.v-unit .c-cr,body.v-unit .c-nat{display:none}
+body.v-char .c-fix,body.v-char .c-rep{display:none}
+body.v-unit .charbar{display:none}
+body.v-char .fixbar{display:none}
+.c-cn{width:118px;font-weight:600}
+.c-cr{width:52px;text-align:center}
+.c-nat{width:48px;text-align:center;color:var(--dim);font-variant-numeric:tabular-nums}
+.r-N{background:#f3f4f6;color:#4b5563;border-color:#e5e7eb}
+.r-R{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.r-SR{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe}
+.r-SSR{background:#fffbeb;color:#b45309;border-color:#fde68a}
+.r-UR{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+.r-none{background:#fafafa;color:#9ca3af;border-color:#eee;border-style:dashed}
+#chsel{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px;
+  font-family:inherit;background:#fff;max-width:200px}
+.vchip{font-weight:600}
 @media (max-width:1100px){.c-fix,.c-rep{display:none}}
 </style></head><body>
 <header>
   <h1 id="h1"></h1>
   <div class="sub" id="sub"></div>
-  <div class="bar"><span class="lbl" data-ui="lblC"></span><span id="fc"></span></div>
-  <div class="bar"><span class="lbl" data-ui="lblF"></span><span id="ff"></span><span id="fo"></span></div>
+  <div class="bar"><span class="lbl" data-ui="lblV"></span><span id="fv"></span></div>
+  <div class="bar"><span class="lbl" data-ui="lblC"></span><span id="fc"></span><span id="fo"></span></div>
+  <div class="bar fixbar"><span class="lbl" data-ui="lblF"></span><span id="ff"></span></div>
+  <div class="bar charbar"><span class="lbl" data-ui="lblCh"></span><select id="chsel"></select>
+    <span class="lbl" data-ui="lblR"></span><span id="fr"></span></div>
+  <div class="bar charbar"><span class="lbl" data-ui="lblN"></span><span id="fn"></span></div>
   <div class="bar"><span class="lbl" data-ui="lblD"></span><span id="fd"></span></div>
   <div class="bar">
     <input id="q">
@@ -133,6 +153,9 @@ mark{background:var(--hl);padding:0 1px;border-radius:2px}
 <main>
 <table>
   <thead><tr>
+    <th class="c-cn"  data-k="cn"><span data-ui="thCn"></span> <span class="ar"></span></th>
+    <th class="c-cr"  data-k="cr"><span data-ui="thCr"></span> <span class="ar"></span></th>
+    <th class="c-nat" data-k="nt"><span data-ui="thNat"></span> <span class="ar"></span></th>
     <th class="c-id"  data-k="id"><span data-ui="thId"></span> <span class="ar"></span></th>
     <th class="c-seq" data-k="seq"><span data-ui="thSeq"></span></th>
     <th class="c-cat" data-k="c"><span data-ui="thCat"></span> <span class="ar"></span></th>
@@ -477,7 +500,8 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;'
 const el = id => document.getElementById(id);
 const fc = el('fc'), ff = el('ff'), fo = el('fo'), fd = el('fd'), q = el('q'), tb = el('tb'),
       empty = el('empty'), shown = el('shown'), tot = el('tot'), nsk = el('nsk'),
-      novr = el('novr'), ndec = el('ndec'), fimp = el('fimp');
+      novr = el('novr'), ndec = el('ndec'), fimp = el('fimp'),
+      fv = el('fv'), fr = el('fr'), fn = el('fn'), chsel = el('chsel');
 const T = k => (M.ui && M.ui[k] !== undefined) ? M.ui[k] : '';
 const TF = (k, v) => Object.keys(v).reduce((s, x) => s.split('{' + x + '}').join(v[x]), String(T(k)));
 const nOk = n => TF('dnOk', {n: n});
@@ -488,6 +512,7 @@ el('sub').innerHTML = String(T('sub'))
 q.placeholder = T('ph');
 document.querySelectorAll('[data-ui]').forEach(e => { e.textContent = T(e.dataset.ui); });
 tot.textContent = M.total;
+document.body.className = 'v-unit';
 const STKEY = T('ns') + 'state.' + M.src;
 let ST = {};   
 try { ST = JSON.parse(localStorage.getItem(STKEY) || '{}'); } catch (e) { ST = {}; }
@@ -512,15 +537,26 @@ const FIXED = {C0: 'none', C10: 'hold', CX: 'nofix', CY: 'nofix'};
 const dec = d => FIXED[cat(d)] || (st(d).d || d.dv || '');
 const note = d => st(d).n !== undefined ? st(d).n : (d.dn || '');
 const decided = d => dec(d) !== '';
-const selC = new Set(), selF = new Set(), selD = new Set();
+const selC = new Set(), selF = new Set(), selD = new Set(), selR = new Set(), selN = new Set();
 let onlyOv = false, sortK = null, sortDir = 1, allOpen = true;   
+let vw = 'unit', selCh = '';
+function setView(v) {
+  if (v === vw) return;
+  vw = v;
+  document.body.className = 'v-' + v;
+  sortK = v === 'char' ? 'cn' : null;
+  sortDir = 1;
+  document.querySelectorAll('thead .ar').forEach(a => a.textContent = '');
+  render();
+}
 function tally() {
-  const c = {}, f = {}, dd = {};
+  const c = {}, f = {}, dd = {}, rr = {}, nn = {};
   D.forEach(d => {
     const k = cat(d); c[k] = (c[k] || 0) + 1; f[d.f] = (f[d.f] || 0) + 1;
     const x = dec(d); dd[x] = (dd[x] || 0) + 1;
+    rr[d.cr] = (rr[d.cr] || 0) + 1; nn[d.nt] = (nn[d.nt] || 0) + 1;
   });
-  return {c: c, f: f, d: dd};
+  return {c: c, f: f, d: dd, r: rr, n: nn};
 }
 function chips(host, keys, n, sel, label, extra) {
   host.innerHTML = keys.map(k =>
@@ -538,12 +574,34 @@ function bars() {
   chips(fc, M.codes, n.c, selC, k => k + ' ' + M.name[k], k => k === 'C0' ? 'c0chip' : '');
   chips(ff, M.fixers, n.f, selF, k => k);
   chips(fd, M.decs, n.d, selD, k => M.decName[k], k => k === '' ? 'c0chip' : '');
+  chips(fr, M.rar, n.r, selR, k => k, k => 'r-' + (/^[A-Z]+$/.test(k) ? k : 'none'));
+  chips(fn, M.nats, n.n, selN, k => k);
+  views();
+  charSel();
   const nov = D.filter(isOv).length;
   novr.textContent = nov;
   ndec.textContent = D.filter(decided).length;
   fo.innerHTML = '<span class="chip ovchip' + (onlyOv ? ' on' : '') +
     '" id="chOv">' + esc(T('ovOnly')) + '<span class="n">' + nov + '</span></span>';
   el('chOv').onclick = () => { onlyOv = !onlyOv; render(); };
+}
+function views() {
+  fv.innerHTML = [['unit', 'vUnit'], ['char', 'vChar']].map(v =>
+    '<span class="chip vchip' + (vw === v[0] ? ' on' : '') + '" data-v="' + v[0] + '">' +
+    esc(T(v[1])) + '</span>').join(' ');
+  fv.querySelectorAll('.chip').forEach(c => c.onclick = () => setView(c.dataset.v));
+}
+function charSel() {
+  const cnt = {};
+  D.forEach(d => { cnt[d.cn] = (cnt[d.cn] || 0) + 1; });
+  const top = M.chTop.filter(x => cnt[x]);
+  const rest = Object.keys(cnt).filter(x => M.chTop.indexOf(x) < 0)
+    .sort((a, b) => a.localeCompare(b, 'zh'));
+  chsel.innerHTML = ['<option value="">' + esc(T('chAll')) + '</option>'].concat(
+    top.concat(rest).map(x =>
+      '<option value="' + esc(x) + '"' + (x === selCh ? ' selected' : '') + '>' +
+      esc(x) + ' (' + cnt[x] + ')</option>')).join('');
+  chsel.onchange = () => { selCh = chsel.value; render(); };
 }
 function md(s, kw) {
   let h = esc(s)
@@ -561,8 +619,13 @@ function match(d, kw) {
   if (selC.size && !selC.has(cat(d))) return false;
   if (selF.size && !selF.has(d.f)) return false;
   if (selD.size && !selD.has(dec(d))) return false;
+  if (vw === 'char') {
+    if (selCh && d.cn !== selCh) return false;
+    if (selR.size && !selR.has(d.cr)) return false;
+    if (selN.size && !selN.has(d.nt)) return false;
+  }
   if (!kw) return true;
-  return (d.id + ' ' + d.n + ' ' + d.t + ' ' + d.b + ' ' + d.r + ' ' + note(d))
+  return (d.id + ' ' + d.n + ' ' + d.cn + ' ' + d.t + ' ' + d.b + ' ' + d.r + ' ' + note(d))
     .toLowerCase().includes(kw);
 }
 const optC = c => M.codes.map(k =>
@@ -575,11 +638,13 @@ function render() {
   const kw = q.value.trim().toLowerCase();
   view = D.filter(d => match(d, kw));
   if (sortK) {
-    const num = sortK === 'id' || sortK === 'seq';
-    const ord = (d, k) => k === 'c' ? M.codes.indexOf(cat(d)) : M.decs.indexOf(dec(d));
+    const num = sortK === 'id' || sortK === 'seq' || sortK === 'nt';
+    const ord = (d, k) => k === 'c' ? M.codes.indexOf(cat(d))
+                        : k === 'cr' ? M.rar.indexOf(d.cr)
+                        : M.decs.indexOf(dec(d));
     view = view.slice().sort((a, b) => sortDir *
       (num ? a[sortK] - b[sortK]
-           : (sortK === 'c' || sortK === 'd') ? ord(a, sortK) - ord(b, sortK)
+           : (sortK === 'c' || sortK === 'd' || sortK === 'cr') ? ord(a, sortK) - ord(b, sortK)
            : String(a[sortK]).localeCompare(String(b[sortK]), 'zh')));
   }
   shown.textContent = view.length;
@@ -597,6 +662,10 @@ function render() {
             (nt ? '<span class="dnok">' + nOk(nt.length) + '</span>' : T('dnHint')) + '</div>'
           : '')) + sg;
     return '<tr class="' + (ov ? 'ovr ' : '') + (c === 'C0' ? 'c0' : '') + '">' +
+      '<td class="c-cn">' + md(d.cn, kw) + '</td>' +
+      '<td class="c-cr"><span class="tag r-' +
+        (/^[A-Z]+$/.test(d.cr) ? d.cr : 'none') + '">' + esc(d.cr) + '</span></td>' +
+      '<td class="c-nat">' + esc(d.nt) + '</td>' +
       '<td class="c-id">' + d.id +
         (d.n ? '<div class="sname">' + md(d.n, kw) + '</div>' : '') + '</td>' +
       '<td class="c-seq">' + d.seq + '</td>' +
@@ -648,8 +717,10 @@ document.querySelectorAll('thead th[data-k]').forEach(th => th.onclick = () => {
 });
 q.oninput = render;
 el('reset').onclick = () => {
-  selC.clear(); selF.clear(); selD.clear(); onlyOv = false;
-  q.value = ''; sortK = null; allOpen = true;
+  selC.clear(); selF.clear(); selD.clear(); selR.clear(); selN.clear();
+  selCh = ''; onlyOv = false;
+  q.value = ''; allOpen = true;
+  if (vw !== 'unit') { setView('unit'); } else { sortK = null; }
   document.querySelectorAll('thead .ar').forEach(a => a.textContent = '');
   el('fold').textContent = T('btFold'); render();
 };
@@ -667,7 +738,7 @@ el('csv').onclick = () => {
   const Q = s => '"' + String(s).replace(/"/g, '""') + '"';
   const text = '﻿' +
     [T('csvCols').map(Q).join(',')]
-    .concat(view.map(d => [d.id, d.n, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
+    .concat(view.map(d => [d.id, d.n, d.cn, d.cr, d.nt, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
       (d.t ? '**' + d.t + '**' + T('csvSep') : '') + d.b,
       M.decName[dec(d)], dec(d) === 'mine' ? note(d) : '', d.r,
       isOv(d) ? T('yes') : '', isOv(d) ? orig(d) : ''].map(Q).join(','))).join('\r\n');
