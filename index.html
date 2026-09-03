@@ -85,6 +85,11 @@ select.cs:focus,select.ds:focus{outline:2px solid var(--accent);outline-offset:1
 .d-agree{background:#dcfce7;color:#14532d;border-color:#86efac}
 .d-mine{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd}
 .d-tbd{background:#fee2e2;color:#7f1d1d;border-color:#fca5a5}
+.d-qa{background:#fef3c7;color:#78350f;border-color:#fcd34d}
+select.qs{width:100%;margin-top:4px;font:inherit;font-size:11px;line-height:1.5;
+  padding:1px 3px;border-radius:4px;border:1px solid #fcd34d;background:#fffbeb;
+  color:#78350f;cursor:pointer}
+select.qs:focus{outline:2px solid var(--accent);outline-offset:1px}
 textarea.dn{width:100%;margin-top:5px;font:inherit;font-size:12px;line-height:1.55;
   border:1px solid #93c5fd;border-radius:4px;padding:5px 6px;resize:vertical;
   min-height:64px;background:#f8fbff;color:#1e3a8a}
@@ -536,6 +541,9 @@ const isOv = d => cat(d) !== orig(d);
 const FIXED = {C0: 'none', C10: 'hold', CX: 'nofix', CY: 'nofix'};
 const dec = d => FIXED[cat(d)] || (st(d).d || d.dv || '');
 const note = d => st(d).n !== undefined ? st(d).n : (d.dn || '');
+const qa = d => dec(d) === 'qa' ? (st(d).q || d.qk || M.qDef) : '';
+const optQ = v => M.qas.map(k =>
+  '<option value="' + k + '"' + (k === v ? ' selected' : '') + '>' + M.qNames[k] + '</option>').join('');
 const decided = d => dec(d) !== '';
 const selC = new Set(), selF = new Set(), selD = new Set(), selR = new Set(), selN = new Set();
 let onlyOv = false, sortK = null, sortDir = 1, allOpen = true;   
@@ -661,6 +669,9 @@ function render() {
           ? '<textarea class="dn" data-i="' + i + '" placeholder="' + esc(T('dnPh')) + '">' +
             esc(nt) + '</textarea><div class="dnhint" data-h="' + i + '">' +
             (nt ? '<span class="dnok">' + nOk(nt.length) + '</span>' : T('dnHint')) + '</div>'
+          : '') +
+        (dv === 'qa'
+          ? '<select class="qs" data-i="' + i + '">' + optQ(qa(d)) + '</select>'
           : '')) + sg;
     return '<tr class="' + (ov ? 'ovr ' : '') + (c === 'C0' ? 'c0' : '') + '">' +
       '<td class="c-cn">' + md(d.cn, kw) +
@@ -697,6 +708,11 @@ function render() {
   tb.querySelectorAll('select.ds').forEach(s => s.onchange = () => {
     const d = view[+s.dataset.i];
     put(d, {d: s.value});
+    render();
+  });
+  tb.querySelectorAll('select.qs').forEach(s => s.onchange = () => {
+    const d = view[+s.dataset.i];
+    put(d, {q: s.value});
     render();
   });
   tb.querySelectorAll('textarea.dn').forEach(a => {
@@ -742,7 +758,9 @@ el('csv').onclick = () => {
     [T('csvCols').map(Q).join(',')]
     .concat(view.map(d => [d.id, d.n, d.cn, d.gd, d.cr, d.nt, d.seq, cat(d) + ' ' + M.name[cat(d)], d.f,
       (d.t ? '**' + d.t + '**' + T('csvSep') : '') + d.b,
-      M.decName[dec(d)], dec(d) === 'mine' ? note(d) : '', d.r,
+      M.decName[dec(d)], dec(d) === 'mine' ? note(d) : '',
+      dec(d) === 'qa' ? M.qNames[qa(d)] : '',
+      d.r,
       isOv(d) ? T('yes') : '', isOv(d) ? orig(d) : ''].map(Q).join(','))).join('\r\n');
   dl(String(T('csvName')).replace('{n}', view.length), text, 'text/csv;charset=utf-8');
 };
@@ -752,6 +770,7 @@ el('ovexp').onclick = () => {
   const text = '﻿' + [T('ovCols').join('\t')]
     .concat(list.map(d => [d.id, d.seq, cat(d), orig(d),
       M.decName[dec(d)], dec(d) === 'mine' ? oneline(note(d)) : '',
+      dec(d) === 'qa' ? oneline(M.qNames[qa(d)]) : '',
       oneline(d.t || d.b).slice(0, 80)].join('\t'))).join('\r\n') + '\r\n';
   dl(T('ovName'), text, 'text/tab-separated-values;charset=utf-8');
 };
@@ -763,7 +782,7 @@ fimp.onchange = () => {
     const lines = String(rd.result).replace(/^﻿/, '').trim().split(/\r?\n/);
     const h = lines[0].split('\t'), OC = T('ovCols');
     const iI = h.indexOf(OC[0]), iS = h.indexOf(OC[1]), iC = h.indexOf(OC[2]),
-          iD = h.indexOf(OC[4]), iN = h.indexOf(OC[5]);
+          iD = h.indexOf(OC[4]), iN = h.indexOf(OC[5]), iQ = h.indexOf(OC[6]);
     if (iI < 0 || iS < 0) { alert(TF('aImpHdr', {a: OC[0], b: OC[1]})); return; }
     const base = {}; D.forEach(d => base[key(d)] = d);
     let ok = 0, miss = 0;
@@ -781,6 +800,10 @@ fimp.onchange = () => {
         if (dv !== undefined && dv !== 'none') patch.d = dv;
       }
       if (iN >= 0) patch.n = v[iN] || '';
+      if (iQ >= 0 && patch.d === 'qa') {
+        const qv = Object.keys(M.qNames).filter(k => M.qNames[k] === (v[iQ] || '').trim())[0];
+        if (qv !== undefined) patch.q = qv;
+      }
       put(d, patch); ok++;
     });
     render();
